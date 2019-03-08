@@ -1,0 +1,89 @@
+open preprocess.ods --sheet=11
+scatters FLAT_DEMAND LONG_DEMAND SEMIFINITE_DEMAND --with-lines
+
+#corrgm FLAT_DEMAND 23
+#corrgm LONG_DEMAND 23
+#corrgm SEMIFINITE_DEMAND 23
+
+sums<-summary FLAT_DEMAND LONG_DEMAND SEMIFINITE_DEMAND
+
+freq FLAT_DEMAND --normal
+freq LONG_DEMAND --normal
+freq SEMIFINITE_DEMAND --normal
+
+normtest FLAT_DEMAND --all
+normtest LONG_DEMAND --all
+normtest SEMIFINITE_DEMAND --all
+#mostly "normal"
+
+
+adf 13 FLAT_DEMAND --c --ct --test-down=AIC
+adf 13 LONG_DEMAND --c --ct --test-down=AIC
+adf 13 SEMIFINITE_DEMAND --c --ct --test-down=AIC
+#mostly stationary
+
+open /home/martin/Documents/s/EMI/data/preprocess.ods --sheet=8
+
+#SPOTS
+
+logs EUA_SPOT
+
+smpl 2015-01-02 2016-12-30
+scalar vol=sqrt(256)*sd(l_EUA_SPOT)
+
+genr Y1=log(EUA_FR1) - log(EUA_SPOT)
+genr Y2=log(EUA_FR2) - log(EUA_SPOT)
+genr Y3=log(EUA_FR3) - log(EUA_SPOT)
+genr Y4=log(EUA_FR4) - log(EUA_SPOT)
+genr TTM2=TTM1+256
+genr TTM3=TTM1+512
+genr TTM4=TTM1+768
+
+smpl !missing(TTM1) && !missing(Y1) && !missing(Y2)  && !missing(Y3)  && !missing(Y4) --restrict --permanent
+setobs 5 2012-03-29 --time-series
+
+system method=ols
+    equation Y1 TTM1
+    equation Y2 TTM2
+    equation Y3 TTM3
+    equation Y4 TTM4
+end system    
+
+restrict $system
+    b[1,1]-b[2,1]=0
+    b[1,1]-b[3,1]=0
+    b[1,1]-b[4,1]=0
+end restrict
+estimate $system method=ols
+
+series u1=$uhat[,1]
+series u2=$uhat[,2]
+series u3=$uhat[,3]
+series u4=$uhat[,4]
+
+series u12=u1*u1
+series u22=u2*u2
+series u32=u3*u3
+series u42=u4*u4
+
+series wY1 = Y1 / TTM1
+series wY2 = Y2 / TTM2
+series wY3 = Y3 / TTM3
+series wY4 = Y4 / TTM4
+
+scalar m2 = mean(wY2)
+scalar m3 = mean(wY3)
+scalar m4 = mean(wY4)
+
+scalar v2 = var(wY2)
+scalar v3 = var(wY3)
+scalar v4 = var(wY4)
+
+smpl TTM1 > 128  --restrict
+
+scalar m1 = mean(wY1)
+scalar v1 = var(wY1)
+
+scalar m = (0.5*m1+m2+m3+m4)/3.5
+scalar v = (0.5*v1+v2+v3+v4)/3.5
+scalar s = sqrt(;v)

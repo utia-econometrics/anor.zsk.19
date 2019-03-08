@@ -1,0 +1,61 @@
+open preprocess.ods --sheet=8
+
+#SPOTS
+
+logs EUA_SPOT
+diff l_EUA_SPOT
+r_EUA_SPOT=EUA_SPOT/EUA_SPOT(-1)-1
+
+smpl 2015-01-02 2016-12-30
+
+scalar  volspots=sqrt(256)*sd(d_l_EUA_SPOT)
+scalar p0 = EUA_SPOT[2016-12-30] 
+euap <- gnuplot EUA_SPOT --time-series --with-lines
+euar <- gnuplot r_EUA_SPOT --time-series --with-lines
+
+
+
+#FUTURES
+
+genr Y1=log(EUA_FR1) - log(EUA_SPOT)
+genr Y2=log(EUA_FR2) - log(EUA_SPOT)
+genr Y3=log(EUA_FR3) - log(EUA_SPOT)
+genr Y4=log(EUA_FR4) - log(EUA_SPOT)
+genr TTM1=TTM/256
+genr TTM2=TTM1+1
+genr TTM3=TTM1+2
+genr TTM4=TTM1+3
+
+smpl !missing(TTM1) && !missing(Y1) && !missing(Y2)  && !missing(Y3)  && !missing(Y4) --restrict --permanent
+setobs 5 2012-03-29 --time-series
+
+series wY1 = Y1 / TTM1
+series wY2 = Y2 / TTM2
+series wY3 = Y3 / TTM3
+series wY4 = Y4 / TTM4
+
+scalar m2 = mean(wY2)
+scalar m3 = mean(wY3)
+scalar m4 = mean(wY4)
+
+scalar v2 = var(wY2)
+scalar v3 = var(wY3)
+scalar v4 = var(wY4)
+
+smpl TTM1 > 0.5  --restrict
+
+scalar m1 = mean(wY1)
+scalar v1 = var(wY1)
+
+#results
+
+scalar a = (0.5*m1+m2+m3+m4)/3.5
+scalar vara = (0.5*v1+v2+v3+v4)/3.5
+scalar sma = sqrt(vara)
+
+#end results
+
+smpl --full
+smpl 2015-01-02 2016-12-30 
+setobs 5 2015-01-02 --time-series
+

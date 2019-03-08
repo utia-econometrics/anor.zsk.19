@@ -1,0 +1,42 @@
+open preprocess.ods --sheet=11
+scatters FLAT_DEMAND LONG_DEMAND SEMIFINITE_DEMAND --with-lines
+
+#corrgm FLAT_DEMAND 23
+#corrgm LONG_DEMAND 23
+#corrgm SEMIFINITE_DEMAND 23
+
+sums<-summary FLAT_DEMAND LONG_DEMAND SEMIFINITE_DEMAND
+
+
+freq FLAT_DEMAND --normal
+freq LONG_DEMAND --normal
+freq SEMIFINITE_DEMAND --normal
+
+normtest FLAT_DEMAND --all
+normtest LONG_DEMAND --all
+normtest SEMIFINITE_DEMAND --all
+#mostly "normal"
+
+
+adf 13 FLAT_DEMAND --c --ct --test-down=AIC
+adf 13 LONG_DEMAND --c --ct --test-down=AIC
+adf 13 SEMIFINITE_DEMAND --c --ct --test-down=AIC
+#mostly stationary
+
+summary FLAT_DEMAND LONG_DEMAND SEMIFINITE_DEMAND
+corr FLAT_DEMAND LONG_DEMAND SEMIFINITE_DEMAND EUA_SPOT
+
+#results (->preprocess.ods)
+
+scalar meanf=mean(FLAT_DEMAND)
+scalar meanl=mean(LONG_DEMAND)
+scalar means=mean(SEMIFINITE_DEMAND)
+
+scalar varf=var(FLAT_DEMAND)
+scalar varl=var(LONG_DEMAND)
+scalar vars=var(SEMIFINITE_DEMAND)
+scalar corrfl=corr(FLAT_DEMAND,LONG_DEMAND)
+
+#end results
+
+

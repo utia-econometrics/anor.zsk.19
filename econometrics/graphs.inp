@@ -1,0 +1,23 @@
+open preprocess.ods --sheet=8
+setobs 5 2011-02-03 # some days are missing so I set the wrong starting date so as to match period 2015-16
+smpl 2015-01-02 2016-12-30 
+euaspot <- gnuplot EUA_SPOT --time-series --with-lines
+sandf <- gnuplot EUA_SPOT EUA_F17 EUA_F18 EUA_F19 EUA_F20 --time-series \
+  --with-lines
+genr y17=EUA_F17 - EUA_SPOT
+genr y18=EUA_F18 - EUA_SPOT
+genr y19=EUA_F19 - EUA_SPOT
+genr y20=EUA_F20 - EUA_SPOT 
+futures<-scatters  y17 y18 y19 y20 --with-lines
+
+open /home/martin/Documents/s/EMI/data/preprocess.ods --sheet=11
+scatters FLAT_DEMAND LONG_DEMAND SEMIFINITE_DEMAND --with-lines
+
+series plates = 4.27 * FLAT_DEMAND
+series cuts = 0.234 * FLAT_DEMAND
+series profiles = 0.339 * LONG_DEMAND
+series brams = 0.349 * SEMIFINITE_DEMAND
+series demand = plates + cuts + profiles + brams
+
+demandgraph <- gnuplot demand --time-series --with-lines
+
